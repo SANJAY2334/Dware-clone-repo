@@ -1,101 +1,102 @@
-📌 DWARE Dashboard Assessment
-This is a full-stack web application built as part of the DWARE dashboard assessment, designed to help users manage and analyze data in a professional dashboard. The project includes authentication, dashboard functionalities, data visualization, and interactive UI components.
+# DWARE Dashboard Assessment
 
-🚀 Features
-✅ Professional Authentication System
+## Overview
+The **DWARE Dashboard Assessment** is a professional web-based application that provides an interactive and user-friendly dashboard. The project follows a structured and maintainable architecture, ensuring scalability and efficiency. The authentication system is fully functional with login and signup flows, and users are redirected to the dashboard upon successful login.
 
-Sign-up, Login, Logout functionality
-Secure user authentication & session handling
-Redirection to the dashboard after login
-✅ Dashboard
+## Features
+- **Authentication System**: Login/Signup with redirection to the dashboard.
+- **Dashboard**: A professional UI displaying key analytics and insights.
+- **Query Designer**: Create, manage, and execute database queries.
+- **Database Comparison**: Compare different databases and analyze differences.
+- **Professional UI/UX**: Light-themed, modern design with Tailwind CSS.
+- **Scalability**: Maintainable project structure for future enhancements.
 
-Modern, responsive, and user-friendly UI
-Data insights and analytics
-Query Designer (with a light theme and reference-based UI)
-✅ User Management
+## Tech Stack
+- **Frontend**: React (Vite) + Tailwind CSS
+- **Backend**: Node.js + Express
+- **Database**: MongoDB
 
-Role-based access (if needed in future updates)
-Profile and settings management
-✅ Real-time Data Handling (if required later)
+## Installation
 
-Potential implementation of real-time scheduling
-✅ Technology Stack
+### Prerequisites
+Ensure you have the following installed:
+- Node.js (`>=16.x` recommended)
+- MongoDB (Cloud/Local)
 
-Frontend: React + Vite, Tailwind CSS
-Backend: Node.js + Express
-Database: MongoDB
-Authentication: JWT
-📂 Project Structure
-bash
-Copy
-Edit
+### Steps
+
+1. **Clone the repository**  
+   ```sh
+   git clone https://github.com/your-repo/dware-dashboard.git
+   cd dware-dashboard
+   ```
+
+2. **Install dependencies**  
+   - Frontend:
+     ```sh
+     cd frontend
+     npm install
+     ```
+   - Backend:
+     ```sh
+     cd backend
+     npm install
+     ```
+
+3. **Set up environment variables**  
+   - Create a `.env` file in the `backend` directory and add:  
+     ```env
+     MONGO_URI=your_mongo_connection_string
+     JWT_SECRET=your_secret_key
+     ```
+
+4. **Run the development servers**  
+   - Backend:
+     ```sh
+     cd backend
+     npm run dev
+     ```
+   - Frontend:
+     ```sh
+     cd frontend
+     npm run dev
+     ```
+
+## Usage
+- Open `http://localhost:5173` (or the provided Vite dev URL) in your browser.
+- Register/Login to access the dashboard.
+- Use the Query Designer to create and test queries.
+- Perform database comparisons and analyze results.
+
+## Project Structure
+
+```
 dware-dashboard/
-│── backend/                   # Node.js + Express backend  
-│   ├── models/                 # Mongoose models  
-│   ├── routes/                 # Express routes  
-│   ├── controllers/            # Business logic  
-│   ├── middleware/             # Auth & error handling middleware  
-│   ├── config/                 # Configuration files (DB connection, etc.)  
-│   ├── server.js               # Main backend entry file  
-│  
-│── frontend/                   # React + Vite frontend  
-│   ├── src/  
-│   │   ├── components/         # Reusable UI components  
-│   │   ├── pages/              # Page components  
-│   │   ├── context/            # Global state management (Auth, etc.)  
-│   │   ├── styles/             # Tailwind-based styles  
-│   │   ├── App.jsx             # Main entry file  
-│   │   ├── index.jsx           # ReactDOM entry point  
-│  
-│── .env                        # Environment variables  
-│── package.json                # Project dependencies  
-│── README.md                   # Project documentation  
-🔧 Setup & Installation
-1️⃣ Clone the Repository
-bash
-Copy
-Edit
-git clone https://github.com/your-username/dware-dashboard.git
-cd dware-dashboard
-2️⃣ Backend Setup
-bash
-Copy
-Edit
-cd backend
-npm install
-Create a .env file in the backend folder with the following variables:
-env
-Copy
-Edit
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-Start the backend server:
-bash
-Copy
-Edit
-npm start
-3️⃣ Frontend Setup
-bash
-Copy
-Edit
-cd frontend
-npm install
-npm run dev
-🔑 Authentication Flow
-Users sign up/log in through the frontend.
-The backend validates credentials and generates a JWT token.
-On successful login, users are redirected to the dashboard.
-🎨 UI/UX & Theming
-Light-themed Query Designer
-Professional, clean, and intuitive UI
-Tailwind CSS for rapid styling
-🚀 Future Enhancements
-Role-based Access Control (RBAC)
-Real-time Data Handling
-Advanced Analytics & Charts
-📜 License
-This project is open-source under the MIT License.
+│── backend/                # Express server
+│   ├── models/             # Mongoose schemas
+│   ├── routes/             # API routes
+│   ├── controllers/        # Business logic
+│   ├── middleware/         # Auth middleware
+│   ├── server.js           # Entry point
+│── frontend/               # React + Vite project
+│   ├── src/
+│   │   ├── components/     # UI Components
+│   │   ├── pages/          # Pages (Dashboard, Auth, etc.)
+│   │   ├── context/        # Global state (Auth, Data)
+│   │   ├── App.jsx         # Main app component
+│   ├── vite.config.js      # Vite configuration
+│── README.md               # Project documentation
+│── package.json            # Dependencies and scripts
+```
 
-🙌 Contributing
-Want to improve this project? Feel free to fork it and submit a pull request!
+## Future Enhancements
+- Real-time scheduling and notifications.
+- AI-driven query suggestions.
+- More integrations with external databases.
+
+## License
+This project is licensed under the MIT License.
+
+---
+
+
