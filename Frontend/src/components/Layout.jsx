@@ -1,25 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 
 const Layout = () => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Sidebar state
+
   return (
-    <div className="flex h-screen overflow-hidden bg-blue-100">
-     
-      <div className=" text-white fixed h-full shadow-lg">
-        <Sidebar />
-      </div>
+    <div className="flex h-screen bg-blue-100">
+      {/* Sidebar */}
+      <Sidebar isSidebarOpen={isSidebarOpen} />
 
-      
-      <div className="flex-1 flex flex-col ml-64 transition-all duration-300">
-       
-        <div className="sticky top-0 z-50 shadow-md bg-white">
-          <Navbar />
-        </div>
+      {/* Main Content */}
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "ml-64" : "ml-16"}`}>
+        
+        {/* Navbar */}
+        <Navbar isSidebarOpen={isSidebarOpen} toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
 
-       
-        <main className="flex-1 p-6 overflow-auto">
+        {/* Page Content */}
+        <main className="flex-1 p-6 overflow-y-auto">
           <Outlet />
         </main>
       </div>

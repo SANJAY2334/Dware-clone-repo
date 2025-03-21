@@ -3,7 +3,7 @@ import { FaPlus, FaPencilAlt, FaUpload } from "react-icons/fa";
 
 const DataSourceCard = ({ name, icon, isEditable, isUploadable }) => {
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-blue-100  justify-center w-40 h-40 relative">
+    <div className="bg-white p-4 rounded-lg shadow-md flex flex-col items-center transition delay-150 duration-300 ease-in-out hover:-translate-y-1 hover:scale-110 hover:bg-blue-200  justify-center w-40 h-40 relative">
       {/* Icon */}
       <img src={icon} alt={name} className="w-12 h-12 mb-2 object-scale-down" />
 

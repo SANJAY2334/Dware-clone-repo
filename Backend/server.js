@@ -4,21 +4,25 @@ import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import comparisonRoutes from "./routes/comparisonRoutes.js"; // ✅ Import Comparison Routes
 import errorHandler from "./middleware/errorMiddleware.js";
 
 dotenv.config();
 
-const app = express(); // ✅ Define 'app' before using it
+
+const app = express(); 
 
 app.use(express.json());
 app.use(cors({
-    origin: "http://localhost:5173", // Change this to match your frontend URL
+    origin: "http://localhost:5173", // Update this to match your frontend
     credentials: true,
 }));
 
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+
+app.use("/api/comparisons", comparisonRoutes); // ✅ Add Comparison API
 
 app.get("/api/dashboard", (req, res) => {
     res.json({
@@ -37,7 +41,7 @@ app.use(errorHandler);
 mongoose
   .connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("🔥 MongoDB Connected"))
-  .catch((err) => console.log(err));
+  .catch((err) => console.log("❌ MongoDB Connection Error:", err));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

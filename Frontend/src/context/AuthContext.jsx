@@ -4,15 +4,17 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // New loading state
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
+
     if (token && storedUser) {
       setUser(JSON.parse(storedUser));
     }
-    setLoading(false); // Done checking auth state
+
+    setLoading(false);
   }, []);
 
   const login = async (email, password, navigate) => {
@@ -44,7 +46,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading }}>
-      {!loading && children} {/* Show children only after auth check */}
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

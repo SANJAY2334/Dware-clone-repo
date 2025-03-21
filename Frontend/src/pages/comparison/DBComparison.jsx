@@ -2,7 +2,6 @@ import { useState } from "react";
 import { FaFileExcel, FaTrash, FaPlay, FaPlus } from "react-icons/fa";
 import AddDBCompareModal from "../../components/AddDBCompareModal";
 
-
 const DBComparison = () => {
   const [data, setData] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
@@ -19,9 +18,36 @@ const DBComparison = () => {
     setSelectedRows([]);
   };
 
-  // Function to simulate running the comparison
-  const handleRun = () => {
-    alert("Comparison running...");
+  // ✅ Fixed handleRun function
+  const handleRun = async () => {
+    try {
+      if (data.length === 0) {
+        alert("No data to compare.");
+        return;
+      }
+
+      const requestBody = {
+        type: "Schema", // Adjust this dynamically if needed
+        results: data,
+      };
+
+      const response = await fetch("http://localhost:5000/api/comparisons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      const result = await response.json();
+      console.log("Response:", result);
+
+      if (response.ok) {
+        alert("Comparison results saved!");
+      } else {
+        alert(`Failed: ${result.message}`);
+      }
+    } catch (error) {
+      console.error("Error running comparison:", error);
+    }
   };
 
   // Function to export data to Excel
@@ -143,7 +169,7 @@ const DBComparison = () => {
       <AddDBCompareModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onAdd={handleAdd}
+        onSave={handleAdd} // ✅ Fixed prop name
       />
 
       {/* Pagination */}
