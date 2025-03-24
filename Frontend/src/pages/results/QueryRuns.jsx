@@ -19,8 +19,8 @@ const QueryRuns = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <h2 className="text-2xl font-bold text-gray-900">Results – Query Requests</h2>
+    <div className="p-6 rounded-2xl bg-gray-100 min-h-screen">
+      <h2 className="text-2xl  font-bold bg-gray-200 p-4 rounded-xl text-gray-900">Results – Query Requests</h2>
 
       {/* Filter Tabs */}
       <div className="flex space-x-2 mt-4">

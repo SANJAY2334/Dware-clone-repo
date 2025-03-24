@@ -48,18 +48,17 @@ const Sidebar = ({ isSidebarOpen }) => {
 
   return (
     <div
-      className={`fixed top-0 left-0 h-full bg-blue-200 shadow-lg transition-all duration-300 ${
-        isSidebarOpen ? "w-64 p-5" : "w-16"
+      className={`fixed top-0 left-0 h-full bg-blue-200   transition-all duration-300 ${
+        isSidebarOpen ? "w-64 p-5" : "w-0"
       }`}
     >
       {isSidebarOpen && (
         <>
-          {/* Brand Title */}
-          <h2 className="text-2xl font-semibold mb-6">DWARE</h2>
+          
 
           <ul>
             {menuItems.map((item, index) => (
-              <li key={index} className="mb-4">
+              <li key={index} className="mb-4  mt-2">
                 {item.subMenu ? (
                   <>
                     {/* Dropdown Button */}

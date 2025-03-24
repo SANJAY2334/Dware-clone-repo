@@ -3,11 +3,13 @@ import React, { useState } from "react";
 const AddDBCompareModal = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     name: "",
+    type: [], // Multi-select as an array
     sourceType: "",
     sourceName: "",
     targetType: "",
     targetName: "",
     createdBy: "",
+    updatedBy: "",
     comments: "",
   });
 
@@ -16,7 +18,19 @@ const AddDBCompareModal = ({ isOpen, onClose, onSave }) => {
   if (!isOpen) return null;
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+
+    if (type === "checkbox") {
+      // Handle checkbox selection
+      setFormData((prev) => ({
+        ...prev,
+        [name]: checked
+          ? [...prev[name], value] // Add selected value
+          : prev[name].filter((item) => item !== value), // Remove unselected value
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = (e) => {
@@ -24,15 +38,24 @@ const AddDBCompareModal = ({ isOpen, onClose, onSave }) => {
     setError(""); // Reset error message
 
     // Validation: Ensure required fields are filled
-    const requiredFields = ["name", "sourceType", "sourceName", "targetType", "targetName", "createdBy"];
+    const requiredFields = [
+      "name",
+      "type",
+      "sourceType",
+      "sourceName",
+      "targetType",
+      "targetName",
+      "createdBy",
+      "updatedBy",
+      
+    ];
     for (let field of requiredFields) {
-      if (!formData[field]) {
+      if (!formData[field] || (Array.isArray(formData[field]) && formData[field].length === 0)) {
         setError("Please fill in all required fields.");
         return;
       }
     }
 
-    // Check if onSave is a valid function before calling it
     if (typeof onSave === "function") {
       onSave(formData);
     } else {
@@ -40,14 +63,16 @@ const AddDBCompareModal = ({ isOpen, onClose, onSave }) => {
       return;
     }
 
-    // Reset form and close modal after successful save
+    // Reset form
     setFormData({
       name: "",
+      type: [],
       sourceType: "",
       sourceName: "",
       targetType: "",
       targetName: "",
       createdBy: "",
+      updatedBy: "",
       comments: "",
     });
 
@@ -55,8 +80,8 @@ const AddDBCompareModal = ({ isOpen, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 transition-opacity animate-fadeIn">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 transform transition-transform animate-scaleIn">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">Add DB Comparison</h2>
@@ -70,18 +95,20 @@ const AddDBCompareModal = ({ isOpen, onClose, onSave }) => {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
+          {/* Text Input Fields */}
           {[
-            { label: "Name", name: "name", type: "text" },
-            { label: "Source Name", name: "sourceName", type: "text" },
-            { label: "Target Name", name: "targetName", type: "text" },
-            { label: "Created By", name: "createdBy", type: "text" },
+            { label: "Name", name: "name" },
+            { label: "Source Name", name: "sourceName" },
+            { label: "Target Name", name: "targetName" },
+            { label: "Created By", name: "createdBy" },
+            { label: "Updated By", name: "updatedBy" },
           ].map((field) => (
             <div className="mb-4" key={field.name}>
               <label className="block text-gray-700 font-medium">
                 {field.label} <span className="text-red-500">*</span>
               </label>
               <input
-                type={field.type}
+                type="text"
                 name={field.name}
                 value={formData[field.name]}
                 className="w-full p-2 border rounded"
@@ -90,6 +117,42 @@ const AddDBCompareModal = ({ isOpen, onClose, onSave }) => {
               />
             </div>
           ))}
+
+          {/* Type (Multiple Select as Checkboxes) */}
+          <div className="mb-4">
+            <label className="block text-gray-700 font-medium">
+              Type <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              {[
+                "Function",
+                "Stored Procedure",
+                "User/Role",
+                "Schema",
+                "Triggers",
+                "View",
+                "Tables",
+                "Synonyms",
+              ].map((option) => (
+                <label key={option} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="type"
+                    value={option}
+                    checked={formData.type.includes(option)}
+                    onChange={handleChange}
+                    className="mr-2"
+                  />
+                  {option}
+                </label>
+              ))}
+            </div>
+
+            {/* Display selected options */}
+            <p className="mt-2 text-gray-700">
+              Selected: {formData.type.length > 0 ? formData.type.join(", ") : "None"}
+            </p>
+          </div>
 
           {/* Select Fields */}
           {[

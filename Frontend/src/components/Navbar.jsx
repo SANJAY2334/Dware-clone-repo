@@ -21,7 +21,7 @@ const Navbar = ({ isSidebarOpen, toggleSidebar }) => {
       {/* User Info & Logout */}
       <div className="flex items-center gap-4 mr-4">
         {/* Display User Name */}
-        {user && <span className="text-gray-900 font-medium">Welcome, {user.name || "User"}</span>}
+        {user && <span className="text-gray-900 text-xl font-medium">Welcome, {user.name || "User"}</span>}
 
         {/* Logout Button */}
         <button

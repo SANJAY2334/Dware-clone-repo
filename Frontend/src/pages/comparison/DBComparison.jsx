@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { FaFileExcel, FaTrash, FaPlay, FaPlus } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { FaFileExcel, FaTrash, FaPlay, FaPlus, FaEdit } from "react-icons/fa";
+import * as XLSX from "xlsx"; // Import XLSX for Excel export
 import AddDBCompareModal from "../../components/AddDBCompareModal";
 
 const DBComparison = () => {
@@ -7,18 +8,33 @@ const DBComparison = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Load saved data on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem("dbComparisonData");
+    if (savedData) {
+      setData(JSON.parse(savedData));
+    }
+  }, []);
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    if (data.length > 0) {
+      localStorage.setItem("dbComparisonData", JSON.stringify(data));
+    }
+  }, [data]);
+
   // Function to add a new row from the modal
   const handleAdd = (newEntry) => {
-    setData([...data, { ...newEntry, id: Date.now() }]);
+    setData((prevData) => [...prevData, { ...newEntry, id: crypto.randomUUID() }]);
   };
 
   // Function to delete selected rows
   const handleDelete = () => {
-    setData(data.filter((row) => !selectedRows.includes(row.id)));
-    setSelectedRows([]);
+    setData((prevData) => prevData.filter((row) => !selectedRows.includes(row.id)));
+    setSelectedRows([]); // Clear selection after deletion
   };
 
-  // ✅ Fixed handleRun function
+  // Function to run comparison
   const handleRun = async () => {
     try {
       if (data.length === 0) {
@@ -26,25 +42,14 @@ const DBComparison = () => {
         return;
       }
 
-      const requestBody = {
-        type: "Schema", // Adjust this dynamically if needed
-        results: data,
-      };
-
       const response = await fetch("http://localhost:5000/api/comparisons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({ type: "db", results: data }),
       });
 
       const result = await response.json();
-      console.log("Response:", result);
-
-      if (response.ok) {
-        alert("Comparison results saved!");
-      } else {
-        alert(`Failed: ${result.message}`);
-      }
+      alert(response.ok ? "Comparison results saved!" : `Failed: ${result.message}`);
     } catch (error) {
       console.error("Error running comparison:", error);
     }
@@ -52,6 +57,10 @@ const DBComparison = () => {
 
   // Function to export data to Excel
   const handleExport = () => {
+    if (data.length === 0) {
+      alert("No data to export.");
+      return;
+    }
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "DBComparison");
@@ -67,8 +76,7 @@ const DBComparison = () => {
 
   return (
     <div className="p-4 rounded-2xl bg-gray-100 min-h-screen">
-      {/* Header */}
-      <h2 className="text-2xl font-bold text-gray-900">DB Comparison</h2>
+      <h2 className="text-2xl bg-gray-200 rounded- font-bold text-gray-900">DB Comparison</h2>
 
       {/* Action Buttons */}
       <div className="flex space-x-3 mt-4">
@@ -148,13 +156,13 @@ const DBComparison = () => {
                       onChange={() => handleSelectRow(row.id)}
                     />
                   </td>
-                  <td className="p-3">Edit</td>
+                  <td className="p-3"><FaEdit/></td>
                   <td className="p-3">{row.name}</td>
                   <td className="p-3">{row.type}</td>
                   <td className="p-3">{row.sourceType}</td>
-                  <td className="p-3">{row.sourceTypeName}</td>
+                  <td className="p-3">{row.sourceName}</td>
                   <td className="p-3">{row.targetType}</td>
-                  <td className="p-3">{row.targetTypeName}</td>
+                  <td className="p-3">{row.targetName}</td>
                   <td className="p-3">{row.createdBy}</td>
                   <td className="p-3">{row.updatedBy}</td>
                   <td className="p-3">{row.comment}</td>
@@ -169,20 +177,16 @@ const DBComparison = () => {
       <AddDBCompareModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={handleAdd} // ✅ Fixed prop name
+        onSave={handleAdd}
       />
-
       {/* Pagination */}
-      <div className="flex justify-between items-center mt-4">
+      <div className="flex justify-between align-middle items-center mt-4">
         <p className="text-gray-600">
-          Showing {data.length === 0 ? 0 : 1} to {data.length} of {data.length}{" "}
-          entries
+          Showing {data.length === 0 ? 0 : 1} to {data.length} of {data.length} entries
         </p>
         <div className="flex items-center space-x-2">
           <button className="px-3 py-1 border rounded-md">«</button>
-          <button className="px-3 py-1 border bg-blue-500 text-white rounded-md">
-            1
-          </button>
+          <button className="px-3 py-1 border bg-blue-500 text-white rounded-md">1</button>
           <button className="px-3 py-1 border rounded-md">»</button>
           <select className="border p-1 rounded-md">
             <option>10</option>

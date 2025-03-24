@@ -20,6 +20,8 @@ import CompareRuns from "./pages/results/CompareRuns";
 import MetaRuns from "./pages/results/MetaRuns";
 import DBRuns from "./pages/results/DBRuns"; // Renamed for consistency
 
+
+
 const App = () => {
   return (
     <AuthProvider>
@@ -48,6 +50,8 @@ const App = () => {
             <Route path="results/meta-runs" element={<MetaRuns />} />
             <Route path="results/db-runs" element={<DBRuns />} /> {/* Renamed */}
           </Route>
+
+          
         </Routes>
       </Router>
     </AuthProvider>

@@ -31,14 +31,30 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Get specific type of comparison results
-router.get("/:type", async (req, res) => {
+// ✅ Get specific type of comparison results (Placed before DELETE to avoid conflicts)
+router.get("/type/:type", async (req, res) => {
   try {
     const { type } = req.params;
     const results = await ComparisonResult.find({ type }).sort({ createdAt: -1 });
     res.json(results);
   } catch (error) {
     res.status(500).json({ message: "Error fetching results", error });
+  }
+});
+
+// ✅ Delete a comparison result by ID (Placed after GET /type to avoid conflicts)
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedResult = await ComparisonResult.findByIdAndDelete(id);
+
+    if (!deletedResult) {
+      return res.status(404).json({ message: "Result not found" });
+    }
+
+    res.json({ message: "Comparison result deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting comparison result", error });
   }
 });
 
