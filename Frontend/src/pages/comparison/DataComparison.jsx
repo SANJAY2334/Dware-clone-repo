@@ -82,7 +82,7 @@ const DataComparison = () => {
       <div className="flex space-x-3 mt-4">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 duration-300"
         >
           <FaPlus /> <span>Add Data Compare</span>
         </button>
@@ -99,7 +99,7 @@ const DataComparison = () => {
         </button>
         <button
           onClick={handleRun}
-          className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+          className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 duration-300"
         >
           <FaPlay /> <span>Run</span>
         </button>

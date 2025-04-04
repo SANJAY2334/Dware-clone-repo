@@ -76,13 +76,13 @@ const MetaComparison = () => {
 
   return (
     <div className="p-4 rounded-2xl bg-gray-100 min-h-screen">
-      <h2 className="text-2xl font-bold text-gray-900">Meta Comparison</h2>
+      <h2 className="text-2xl rounded-xl p-4 bg-gray-200 font-bold text-gray-900">Meta Comparison</h2>
 
       {/* Action Buttons */}
       <div className="flex space-x-3 mt-4">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 duration-300"
         >
           <FaPlus /> <span>Add Meta Compare</span>
         </button>
@@ -99,7 +99,7 @@ const MetaComparison = () => {
         </button>
         <button
           onClick={handleRun}
-          className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+          className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 duration-300"
         >
           <FaPlay /> <span>Run</span>
         </button>

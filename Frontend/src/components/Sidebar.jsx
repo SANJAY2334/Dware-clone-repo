@@ -64,7 +64,7 @@ const Sidebar = ({ isSidebarOpen }) => {
                     {/* Dropdown Button */}
                     <button
                       onClick={() => toggleDropdown(item.name)}
-                      className="flex items-center w-full p-3 rounded-md hover:bg-gray-100 justify-between"
+                      className="flex items-center w-full p-3 rounded-md duration-300 hover:bg-gray-100 justify-between"
                       aria-expanded={openDropdown[item.name]}
                     >
                       <span className="flex items-center gap-3">
@@ -85,11 +85,11 @@ const Sidebar = ({ isSidebarOpen }) => {
                           <li key={subIndex}>
                             <Link
                               to={subItem.path}
-                              className={`block p-2 rounded-lg transition-colors ${
+                              className={`block p-2 rounded-lg duration-300  transition-colors ${
                                 location.pathname === subItem.path
                                   ? "bg-blue-600 text-white"
                                   : "hover:bg-gray-100"
-                              }`}
+                              } `}
                             >
                               {subItem.name}
                             </Link>
@@ -101,7 +101,7 @@ const Sidebar = ({ isSidebarOpen }) => {
                 ) : (
                   <Link
                     to={item.path}
-                    className={`flex items-center p-3 rounded-lg transition-colors gap-3 ${
+                    className={`flex items-center p-3 rounded-lg duration-300 transition-colors gap-3 ${
                       location.pathname === item.path
                         ? "bg-blue-600 text-white"
                         : "hover:bg-gray-100"

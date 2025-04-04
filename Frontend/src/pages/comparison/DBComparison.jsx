@@ -76,13 +76,13 @@ const DBComparison = () => {
 
   return (
     <div className="p-4 rounded-2xl bg-gray-100 min-h-screen">
-      <h2 className="text-2xl bg-gray-200 rounded- font-bold text-gray-900">DB Comparison</h2>
+      <h2 className="text-2xl bg-gray-200 rounded-xl font-bold p-4 text-gray-900">DB Comparison</h2>
 
       {/* Action Buttons */}
       <div className="flex space-x-3 mt-4">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 duration-300"
         >
           <FaPlus /> <span>Add DB Compare</span>
         </button>
@@ -99,7 +99,7 @@ const DBComparison = () => {
         </button>
         <button
           onClick={handleRun}
-          className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
+          className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 duration-300"
         >
           <FaPlay /> <span>Run</span>
         </button>

@@ -4,7 +4,8 @@ import authBg from "../assets/auth.bg.jpg"; // Ensure the path is correct
 
 const Signup = () => {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({
@@ -30,7 +31,7 @@ const Signup = () => {
     const res = await fetch("http://localhost:5000/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ firstName, lastName, email, password }), // ✅ Sending firstName & lastName
     });
 
     const data = await res.json();
@@ -54,14 +55,26 @@ const Signup = () => {
       >
         <h2 className="text-3xl font-bold mb-5 text-center text-gray-300">Create an Account</h2>
 
-        {/* Name Input */}
+        {/* First Name Input */}
         <div className="relative mb-3">
           <input
             type="text"
-            placeholder="Full Name"
-            className="border border-gray-600 bg-transparent text-white p-3 w-full rounded-lg transition-all duration-300 outline-none focus:ring-2 focus:ring-blue-500"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            placeholder="First Name"
+            className="border border-gray-600 bg-transparent text-white p-3 w-full rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+          />
+        </div>
+
+        {/* Last Name Input */}
+        <div className="relative mb-3">
+          <input
+            type="text"
+            placeholder="Last Name"
+            className="border border-gray-600 bg-transparent text-white p-3 w-full rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
             required
           />
         </div>
@@ -71,7 +84,7 @@ const Signup = () => {
           <input
             type="email"
             placeholder="Email"
-            className="border border-gray-600 bg-transparent text-white p-3 w-full rounded-lg transition-all duration-300 outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-600 bg-transparent text-white p-3 w-full rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -83,7 +96,7 @@ const Signup = () => {
           <input
             type="password"
             placeholder="Password"
-            className="border border-gray-600 bg-transparent text-white p-3 w-full rounded-lg transition-all duration-300 outline-none focus:ring-2 focus:ring-blue-500"
+            className="border border-gray-600 bg-transparent text-white p-3 w-full rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
@@ -117,23 +130,6 @@ const Signup = () => {
         >
           Sign Up
         </button>
-
-        {/* Divider */}
-        <div className="flex items-center my-4">
-          <hr className="flex-grow border-gray-600" />
-          <span className="text-gray-400 mx-2">or</span>
-          <hr className="flex-grow border-gray-600" />
-        </div>
-
-        {/* Social Logins */}
-        <div className="flex justify-center gap-4">
-          <button className="p-2 bg-gray-700 text-gray-300 rounded-lg shadow hover:bg-gray-600 transition-all duration-300">
-            Google
-          </button>
-          <button className="p-2 bg-gray-800 text-white rounded-lg shadow hover:bg-gray-900 transition-all duration-300">
-            GitHub
-          </button>
-        </div>
 
         {/* Already Have an Account? */}
         <p className="text-center text-sm text-gray-400 mt-4">
