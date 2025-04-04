@@ -10,6 +10,9 @@ import errorHandler from "./middleware/errorMiddleware.js";
 import User from "./models/User.js"; // ✅ Import User Model
 import eventRoutes from "./routes/eventRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
+import dataSourceRoutes from "./routes/dataSourceRoutes.js";
+import connectionRoutes from "./routes/connectionRoutes.js";
+
 
 
 dotenv.config();
@@ -90,6 +93,11 @@ app.use("/api/comparisons", comparisonRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/dataSource", dataSourceRoutes);
+
+app.use("/api/getConnection", connectionRoutes); // 👈 Mount route
+
+
 // ✅ Middleware
 app.use(errorHandler);
 

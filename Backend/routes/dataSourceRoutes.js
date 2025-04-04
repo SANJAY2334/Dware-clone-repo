@@ -1,16 +1,37 @@
 import express from "express";
 import DataSource from "../models/DataSource.js";
+import verifyToken from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// ✅ Get All Data Sources
-router.get("/", async (req, res) => {
+// ✅ GET all data sources
+router.get("/getDS", verifyToken, async (req, res) => {
   try {
     const dataSources = await DataSource.find();
-    res.status(200).json(dataSources);
+
+    const formattedData = dataSources.map(({ id, name, type, icon, isUploaded, isActive, orderID, list_ID, isTestActive }) => ({
+      id, name, type, icon, isUploaded, isActive, orderID, list_ID, isTestActive,
+    }));
+
+    res.json(formattedData);
   } catch (error) {
-    console.error("❌ Error fetching data sources:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    res.status(500).json({ message: "Error fetching data sources", error });
+  }
+});
+
+// ✅ POST (Create a new Data Source)
+router.post("/createDS", verifyToken, async (req, res) => {
+  try {
+    const { id, name, type, icon, isUploaded, isActive, orderID, list_ID, isTestActive } = req.body;
+
+    const newDataSource = new DataSource({
+      id, name, type, icon, isUploaded, isActive, orderID, list_ID, isTestActive,
+    });
+
+    await newDataSource.save();
+    res.status(201).json({ message: "Data source created successfully", data: newDataSource });
+  } catch (error) {
+    res.status(500).json({ message: "Error creating data source", error });
   }
 });
 

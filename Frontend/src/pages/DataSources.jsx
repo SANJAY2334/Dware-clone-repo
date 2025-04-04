@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
 import DataSourceCard from "../components/DataSourceCard";
+import DataSource from "../components/DataSource";
+import ProjectList from "../components/projectList";
+import AddNewConnection from "../components/AddNewConnection";
 
 const DataSources = () => {
   const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedDataSource, setSelectedDataSource] = useState("");
 
   const databases = [
     { name: "SQL", icon: "/icons/sql.png", isEditable: true },
@@ -39,7 +44,7 @@ const DataSources = () => {
       if (!response.ok) throw new Error("Failed to fetch user details");
 
       const userData = await response.json();
-      setUserDetails(userData.user); // ✅ Ensure correct data structure
+      setUserDetails(userData.user);
     } catch (err) {
       console.error("❌ Error fetching user details:", err);
     } finally {
@@ -52,37 +57,59 @@ const DataSources = () => {
     fetchUserDetails();
   }, []);
 
+  // ✅ Handle Database Click
+  const handleDatabaseClick = (dbName) => {
+    setSelectedDataSource(dbName); // Set selected database
+    setShowModal(true); // Show modal
+  };
+
   return (
     <div className="p-10 bg-gray-50 min-h-screen rounded-2xl">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6"> Data Sources</h2>
+      <h2 className="text-3xl font-bold text-gray-800 mb-6">Data Sources</h2>
 
-      {/* ✅ Loading State */}
       {loading ? (
         <p className="text-center text-gray-600">Loading...</p>
       ) : (
         <>
-          
-
           {/* ✅ Database Section */}
           <div className="bg-blue-100 shadow-lg rounded-lg p-6">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4"> Databases</h3>
+            <h3 className="text-xl font-semibold text-gray-700 mb-4">Databases</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {databases.map((db, index) => (
-                <DataSourceCard key={index} {...db} />
+                <button key={index} onClick={() => handleDatabaseClick(db.name)}>
+                  <DataSourceCard {...db} />
+                </button>
               ))}
             </div>
           </div>
 
           {/* ✅ Flat Files Section */}
           <div className="bg-blue-100 shadow-lg rounded-lg p-6 mt-8">
-            <h3 className="text-xl font-semibold text-gray-700 mb-4"> Flat Files</h3>
+            <h3 className="text-xl font-semibold text-gray-700 mb-4">Flat Files</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {flatFiles.map((file, index) => (
                 <DataSourceCard key={index} {...file} />
               ))}
             </div>
+
+            {/* ✅ Additional Components */}
+            <div className="mt-6">
+              <DataSource />
+            </div>
+
+            <div className="mt-6">
+              <ProjectList />
+            </div>
           </div>
         </>
+      )}
+
+      {/* ✅ Show AddNewConnection Modal when triggered */}
+      {showModal && (
+        <AddNewConnection
+          onClose={() => setShowModal(false)}
+          preSelectedDataSource={selectedDataSource}
+        />
       )}
     </div>
   );
