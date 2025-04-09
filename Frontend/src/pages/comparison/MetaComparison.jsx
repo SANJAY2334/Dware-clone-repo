@@ -1,47 +1,71 @@
 import { useState, useEffect } from "react";
 import { FaFileExcel, FaTrash, FaPlay, FaPlus, FaEdit } from "react-icons/fa";
-import * as XLSX from "xlsx"; // Import XLSX for Excel export
+import * as XLSX from "xlsx";
 import AddMetaCompareModal from "../../components/AddMetaModal";
+import clientToken from "../../../utils/ClientToken";
 
 const MetaComparison = () => {
   const [data, setData] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Load saved data on mount
+
+
+  // Fetch from API
   useEffect(() => {
-    const savedData = localStorage.getItem("metaComparisonData");
-    if (savedData) {
-      setData(JSON.parse(savedData));
-    }
+    const fetchData = async () => {
+      try {
+        const response = await fetch("https://dwareautomator.mresult.com/api/compare/GetMetaCompare", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${clientToken}`,
+          },
+        });
+
+        const result = await response.json();
+        if (Array.isArray(result) && result.length > 0) {
+          const withIds = result.map(item => ({ ...item, id: crypto.randomUUID() }));
+          setData(withIds);
+          localStorage.setItem("metaComparisonData", JSON.stringify(withIds));
+        } else {
+          // Fallback to localStorage
+          const savedData = localStorage.getItem("metaComparisonData");
+          if (savedData) {
+            setData(JSON.parse(savedData));
+          }
+        }
+      } catch (error) {
+        console.error("API fetch failed, trying localStorage:", error);
+        const savedData = localStorage.getItem("metaComparisonData");
+        if (savedData) {
+          setData(JSON.parse(savedData));
+        }
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // Save data to localStorage whenever it changes
+  // Save to localStorage when data changes
   useEffect(() => {
     if (data.length > 0) {
       localStorage.setItem("metaComparisonData", JSON.stringify(data));
     }
   }, [data]);
 
-  // Function to add a new row from the modal
   const handleAdd = (newEntry) => {
-    setData((prevData) => [...prevData, { ...newEntry, id: crypto.randomUUID() }]);
+    setData((prev) => [...prev, { ...newEntry, id: crypto.randomUUID() }]);
   };
 
-  // Function to delete selected rows
   const handleDelete = () => {
-    setData((prevData) => prevData.filter((row) => !selectedRows.includes(row.id)));
-    setSelectedRows([]); // Clear selection after deletion
+    setData((prev) => prev.filter((row) => !selectedRows.includes(row.id)));
+    setSelectedRows([]);
   };
 
-  // Function to run comparison
   const handleRun = async () => {
     try {
-      if (data.length === 0) {
-        alert("No data to compare.");
-        return;
-      }
-
+      if (data.length === 0) return alert("No data to compare.");
       const response = await fetch("http://localhost:5000/api/comparisons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,19 +79,14 @@ const MetaComparison = () => {
     }
   };
 
-  // Function to export data to Excel
   const handleExport = () => {
-    if (data.length === 0) {
-      alert("No data to export.");
-      return;
-    }
+    if (data.length === 0) return alert("No data to export.");
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "metaComparison");
     XLSX.writeFile(workbook, "meta_Comparison.xlsx");
   };
 
-  // Handle row selection
   const handleSelectRow = (id) => {
     setSelectedRows((prev) =>
       prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
@@ -80,33 +99,22 @@ const MetaComparison = () => {
 
       {/* Action Buttons */}
       <div className="flex space-x-3 mt-4">
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 duration-300"
-        >
+        <button onClick={() => setIsModalOpen(true)} className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 duration-300">
           <FaPlus /> <span>Add Meta Compare</span>
         </button>
         <button
           onClick={handleDelete}
           disabled={selectedRows.length === 0}
           className={`flex items-center space-x-2 px-4 py-2 rounded-md ${
-            selectedRows.length > 0
-              ? "bg-gray-500 hover:bg-gray-700 text-white"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            selectedRows.length > 0 ? "bg-gray-500 hover:bg-gray-700 text-white" : "bg-gray-300 text-gray-500 cursor-not-allowed"
           }`}
         >
           <FaTrash /> <span>Delete</span>
         </button>
-        <button
-          onClick={handleRun}
-          className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 duration-300"
-        >
+        <button onClick={handleRun} className="flex items-center space-x-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 duration-300">
           <FaPlay /> <span>Run</span>
         </button>
-        <FaFileExcel
-          onClick={handleExport}
-          className="text-green-600 text-3xl cursor-pointer hover:opacity-80"
-        />
+        <FaFileExcel onClick={handleExport} className="text-green-600 text-3xl cursor-pointer hover:opacity-80" />
       </div>
 
       {/* Table */}
@@ -118,11 +126,7 @@ const MetaComparison = () => {
                 <input
                   type="checkbox"
                   className="cursor-pointer"
-                  onChange={(e) =>
-                    setSelectedRows(
-                      e.target.checked ? data.map((row) => row.id) : []
-                    )
-                  }
+                  onChange={(e) => setSelectedRows(e.target.checked ? data.map((row) => row.id) : [])}
                   checked={selectedRows.length === data.length && data.length > 0}
                 />
               </th>
@@ -141,22 +145,15 @@ const MetaComparison = () => {
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan="11" className="p-4 text-center text-gray-500">
-                  No data available
-                </td>
+                <td colSpan="11" className="p-4 text-center text-gray-500">No data available</td>
               </tr>
             ) : (
               data.map((row) => (
                 <tr key={row.id} className="border-t hover:bg-gray-100">
                   <td className="p-3">
-                    <input
-                      type="checkbox"
-                      className="cursor-pointer"
-                      checked={selectedRows.includes(row.id)}
-                      onChange={() => handleSelectRow(row.id)}
-                    />
+                    <input type="checkbox" className="cursor-pointer" checked={selectedRows.includes(row.id)} onChange={() => handleSelectRow(row.id)} />
                   </td>
-                  <td className="p-3"><FaEdit/></td>
+                  <td className="p-3"><FaEdit /></td>
                   <td className="p-3">{row.name}</td>
                   <td className="p-3">{row.type}</td>
                   <td className="p-3">{row.sourceType}</td>
@@ -173,12 +170,9 @@ const MetaComparison = () => {
         </table>
       </div>
 
-      {/* Add Modal */}
-      <AddMetaCompareModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleAdd}
-      />
+      {/* Modal */}
+      <AddMetaCompareModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleAdd} />
+
       {/* Pagination */}
       <div className="flex justify-between align-middle items-center mt-4">
         <p className="text-gray-600">

@@ -1,217 +1,309 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import clientToken from "../../utils/ClientToken";
 
-const AddDBCompareModal = ({ isOpen, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    name: "",
-    type: [], // Multi-select as an array
+const AddDBCompareModal = ({ isOpen, onClose, onSave, editData = null }) => {
+  const initialForm = {
+    comparisonName: "",
+    comparisonType: [],
     sourceType: "",
     sourceName: "",
+    sourceDtlId: "",
     targetType: "",
     targetName: "",
+    targetDtlId: "",
     createdBy: "",
     updatedBy: "",
-    comments: "",
-  });
+    comment: "",
+  };
 
-  const [error, setError] = useState("");
-
-  if (!isOpen) return null;
+  const [form, setForm] = useState(initialForm);
+  const [sourceConnections, setSourceConnections] = useState([]);
+  const [targetConnections, setTargetConnections] = useState([]);
 
   const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
 
-    if (type === "checkbox") {
-      // Handle checkbox selection
-      setFormData((prev) => ({
+    if (name === "sourceType") {
+      setForm((prev) => ({
         ...prev,
-        [name]: checked
-          ? [...prev[name], value] // Add selected value
-          : prev[name].filter((item) => item !== value), // Remove unselected value
+        sourceType: value,
+        sourceName: "",
+        sourceDtlId: "",
+      }));
+      fetchConnections(value, "source");
+    } else if (name === "targetType") {
+      setForm((prev) => ({
+        ...prev,
+        targetType: value,
+        targetName: "",
+        targetDtlId: "",
+      }));
+      fetchConnections(value, "target");
+    } else if (name === "sourceName") {
+      const selected = sourceConnections.find((conn) => conn.name === value);
+      setForm((prev) => ({
+        ...prev,
+        sourceName: value,
+        sourceDtlId: selected?.dtl_ID || "",
+      }));
+    } else if (name === "targetName") {
+      const selected = targetConnections.find((conn) => conn.name === value);
+      setForm((prev) => ({
+        ...prev,
+        targetName: value,
+        targetDtlId: selected?.dtl_ID || "",
       }));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError(""); // Reset error message
+  const fetchConnections = async (type, side) => {
+    const formData = new FormData();
+    formData.append("Mst_ID", 1);
 
-    // Validation: Ensure required fields are filled
-    const requiredFields = [
-      "name",
-      "type",
-      "sourceType",
-      "sourceName",
-      "targetType",
-      "targetName",
-      "createdBy",
-      "updatedBy",
-      
-    ];
-    for (let field of requiredFields) {
-      if (!formData[field] || (Array.isArray(formData[field]) && formData[field].length === 0)) {
-        setError("Please fill in all required fields.");
-        return;
-      }
+    try {
+      const response = await fetch(
+        "https://dwareautomator.mresult.com/api/DataSource/GetConnection",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${clientToken}`,
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+      const filtered = data.filter((conn) => conn.dataSourceType === "SQL");
+
+      if (side === "source") setSourceConnections(filtered);
+      else setTargetConnections(filtered);
+    } catch (error) {
+      console.error("❌ Error fetching connections:", error);
+      if (side === "source") setSourceConnections([]);
+      else setTargetConnections([]);
     }
+  };
 
-    if (typeof onSave === "function") {
-      onSave(formData);
-    } else {
-      console.error("onSave is not a function");
+  const handleSubmit = async () => {
+    const {
+      comparisonName,
+      comparisonType,
+      sourceDtlId,
+      targetDtlId,
+      comment,
+    } = form;
+
+    if (!comparisonName || !comparisonType.length || !sourceDtlId || !targetDtlId) {
+      alert("Please fill all required fields.");
       return;
     }
 
-    // Reset form
-    setFormData({
-      name: "",
-      type: [],
-      sourceType: "",
-      sourceName: "",
-      targetType: "",
-      targetName: "",
-      createdBy: "",
-      updatedBy: "",
-      comments: "",
-    });
+    const payload = {
+      CaseName: comparisonName,
+      CompType: comparisonType.join(", "),
+      SourceDtlID: Number(sourceDtlId),
+      TargetDtlID: Number(targetDtlId),
+      SourceID: 1,
+      TargetID: 1,
+      comments: comment || null,
+      Id: 0,
+    };
 
-    onClose();
+    try {
+      const response = await fetch(
+        "https://dwareautomator.mresult.com/api/Compare/InsertDBCompare",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${clientToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) throw new Error("❌ Failed to save DB Compare");
+
+      const result = await response.json();
+      console.log("✅ DB Compare saved:", result);
+      onSave(result);
+      resetForm();
+      onClose();
+    } catch (error) {
+      console.error("❌ Error saving DB Compare:", error);
+    }
   };
 
+  const resetForm = () => {
+    setForm(initialForm);
+    setSourceConnections([]);
+    setTargetConnections([]);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editData) {
+        setForm(editData);
+        fetchConnections(editData.sourceType, "source");
+        fetchConnections(editData.targetType, "target");
+      } else {
+        resetForm();
+      }
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Add DB Comparison</h2>
-          <button className="text-gray-600 hover:text-gray-900" onClick={onClose}>
-            ✖
-          </button>
-        </div>
-
-        {/* Error Message */}
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          {/* Text Input Fields */}
-          {[
-            { label: "Name", name: "name" },
-            { label: "Source Name", name: "sourceName" },
-            { label: "Target Name", name: "targetName" },
-            { label: "Created By", name: "createdBy" },
-            { label: "Updated By", name: "updatedBy" },
-          ].map((field) => (
-            <div className="mb-4" key={field.name}>
-              <label className="block text-gray-700 font-medium">
-                {field.label} <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name={field.name}
-                value={formData[field.name]}
-                className="w-full p-2 border rounded"
-                onChange={handleChange}
-                required
-              />
-            </div>
-          ))}
-
-          {/* Type (Multiple Select as Checkboxes) */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium">
-              Type <span className="text-red-500">*</span>
-            </label>
-            <div className="grid grid-cols-2 gap-2 mt-2">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6 relative">
+        <h3 className="text-xl font-semibold mb-6 text-center">
+          {editData ? "Edit DB Comparison" : "Add New DB Comparison"}
+        </h3>
+  
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input
+            type="text"
+            name="comparisonName"
+            placeholder="Comparison Name"
+            value={form.comparisonName}
+            onChange={handleChange}
+            className="border p-2 rounded w-full"
+          />
+  
+          <div className="md:col-span-2">
+            <label className="block font-medium mb-1">Comparison Type</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {[
-                "Function",
-                "Stored Procedure",
-                "User/Role",
-                "Schema",
-                "Triggers",
-                "View",
-                "Tables",
-                "Synonyms",
-              ].map((option) => (
-                <label key={option} className="flex items-center">
+                "Table", "Stored Procedure", "User/Roles", "Schema",
+                "Trigger", "Views", "Functions", "Synonyms"
+              ].map((type) => (
+                <label key={type} className="flex items-center space-x-2 text-sm">
                   <input
                     type="checkbox"
-                    name="type"
-                    value={option}
-                    checked={formData.type.includes(option)}
-                    onChange={handleChange}
-                    className="mr-2"
+                    value={type}
+                    checked={form.comparisonType.includes(type)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setForm((prev) => ({
+                        ...prev,
+                        comparisonType: e.target.checked
+                          ? [...prev.comparisonType, value]
+                          : prev.comparisonType.filter((item) => item !== value),
+                      }));
+                    }}
                   />
-                  {option}
+                  <span>{type}</span>
                 </label>
               ))}
             </div>
-
-            {/* Display selected options */}
-            <p className="mt-2 text-gray-700">
-              Selected: {formData.type.length > 0 ? formData.type.join(", ") : "None"}
-            </p>
           </div>
-
-          {/* Select Fields */}
-          {[
-            { label: "Source Type", name: "sourceType" },
-            { label: "Target Type", name: "targetType" },
-          ].map((field) => (
-            <div className="mb-4" key={field.name}>
-              <label className="block text-gray-700 font-medium">
-                {field.label} <span className="text-red-500">*</span>
-              </label>
-              <select
-                name={field.name}
-                value={formData[field.name]}
-                className="w-full p-2 border rounded"
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select</option>
-                <option value="SQL">SQL</option>
-                <option value="Postgre SQL">Postgre SQL</option>
-                <option value="MySQL">MySQL</option>
-                <option value="Oracle">Oracle</option>
-                <option value="SnowFlake">SnowFlake</option>
-              </select>
-            </div>
-          ))}
-
-          {/* Comments */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium">Comments</label>
-            <textarea
-              name="comments"
-              value={formData.comments}
-              className="w-full h-24 p-2 border rounded"
-              onChange={handleChange}
-              placeholder="Add comments (optional)"
-            ></textarea>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex justify-end space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="bg-gray-400 text-white py-2 px-4 rounded-lg hover:bg-gray-500 transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"
-            >
-              Save
-            </button>
-          </div>
-        </form>
+  
+          <select
+            name="sourceType"
+            value={form.sourceType}
+            onChange={handleChange}
+            className="border p-2 rounded"
+          >
+            <option value="">Select Source Type</option>
+            <option value="SQL">SQL</option>
+          </select>
+  
+          <select
+            name="sourceName"
+            value={form.sourceName}
+            onChange={handleChange}
+            className="border p-2 rounded"
+            disabled={!sourceConnections.length}
+          >
+            <option value="">Select Source Name</option>
+            {sourceConnections.map((conn) => (
+              <option key={conn.dtl_ID} value={conn.name}>
+                {conn.name}
+              </option>
+            ))}
+          </select>
+  
+          <select
+            name="targetType"
+            value={form.targetType}
+            onChange={handleChange}
+            className="border p-2 rounded"
+          >
+            <option value="">Select Target Type</option>
+            <option value="SQL">SQL</option>
+          </select>
+  
+          <select
+            name="targetName"
+            value={form.targetName}
+            onChange={handleChange}
+            className="border p-2 rounded"
+            disabled={!targetConnections.length}
+          >
+            <option value="">Select Target Name</option>
+            {targetConnections.map((conn) => (
+              <option key={conn.dtl_ID} value={conn.name}>
+                {conn.name}
+              </option>
+            ))}
+          </select>
+  
+          <input
+            type="text"
+            name="createdBy"
+            placeholder="Created By"
+            value={form.createdBy}
+            onChange={handleChange}
+            className="border p-2 rounded"
+          />
+  
+          <input
+            type="text"
+            name="updatedBy"
+            placeholder="Updated By"
+            value={form.updatedBy}
+            onChange={handleChange}
+            className="border p-2 rounded"
+          />
+        </div>
+  
+        <textarea
+          name="comment"
+          placeholder="Comment"
+          value={form.comment}
+          onChange={handleChange}
+          className="w-full border p-2 rounded mt-4"
+          rows={3}
+        />
+  
+        <div className="flex justify-end space-x-4 mt-6">
+          <button
+            onClick={() => {
+              onClose();
+              resetForm();
+            }}
+            className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            {editData ? "Update" : "Save"}
+          </button>
+        </div>
       </div>
     </div>
   );
-};
 
+};
+// AddDBCompareModal.propTypes = {
+  
 export default AddDBCompareModal;

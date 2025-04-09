@@ -1,13 +1,14 @@
 import { useState } from "react";
+import clientToken from "../../utils/ClientToken";
 
 const AddNewConnection = ({ onClose, preSelectedDataSource }) => {
   const [formData, setFormData] = useState({
     name: "",
-    dataSource: preSelectedDataSource || "",
+    dataSourceType: preSelectedDataSource || "",
     connectionType: "",
-    username: "",
+    userName: "",
     password: "",
-    host: "",
+    hostname: "",
     port: "",
     databaseName: "",
   });
@@ -23,11 +24,32 @@ const AddNewConnection = ({ onClose, preSelectedDataSource }) => {
     e.preventDefault();
     setLoading(true);
 
+    const payload = {
+      userID: 8,
+      mst_ID: 2,
+      dtl_ID: 1,
+      dataSourceType: formData.dataSourceType,
+      fileLocation: null,
+      sheetName: null,
+      name: formData.name,
+      userName: formData.userName,
+      password: formData.password,
+      connectionType: formData.connectionType,
+      hostname: formData.hostname,
+      port: formData.port || null,
+      databaseName: formData.databaseName,
+      connectionString: null,
+      type: null,
+    };
+
     try {
-      const res = await fetch("https://dwareautomator.mresult.com/api/DataSource/GetConnection", {
+      const res = await fetch("https://dwareautomator.mresult.com/api/DataSource/SaveConnection", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${clientToken}`,
+        },
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) throw new Error("Failed to save connection");
@@ -51,97 +73,18 @@ const AddNewConnection = ({ onClose, preSelectedDataSource }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            type="text"
-            name="name"
-            placeholder="Name"
-            required
-            value={formData.name}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-
-          <input
-            type="text"
-            name="dataSource"
-            readOnly
-            value={formData.dataSource}
-            className="w-full border p-2 rounded bg-gray-100 cursor-not-allowed"
-          />
-
-          <input
-            type="text"
-            name="connectionType"
-            placeholder="Connection Type"
-            required
-            value={formData.connectionType}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-
-          <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            required
-            value={formData.username}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            required
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-
-          <input
-            type="text"
-            name="host"
-            placeholder="Host"
-            required
-            value={formData.host}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-
-          <input
-            type="number"
-            name="port"
-            placeholder="Port"
-            value={formData.port}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-
-          <input
-            type="text"
-            name="databaseName"
-            placeholder="Database Name"
-            required
-            value={formData.databaseName}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
+          <input type="text" name="name" placeholder="Name" required value={formData.name} onChange={handleChange} className="w-full border p-2 rounded" />
+          <input type="text" name="dataSourceType" readOnly value={formData.dataSourceType} className="w-full border p-2 rounded bg-gray-100 cursor-not-allowed" />
+          <input type="text" name="connectionType" placeholder="Connection Type" required value={formData.connectionType} onChange={handleChange} className="w-full border p-2 rounded" />
+          <input type="text" name="userName" placeholder="Username" required value={formData.userName} onChange={handleChange} className="w-full border p-2 rounded" />
+          <input type="password" name="password" placeholder="Password" required value={formData.password} onChange={handleChange} className="w-full border p-2 rounded" />
+          <input type="text" name="hostname" placeholder="Host" required value={formData.hostname} onChange={handleChange} className="w-full border p-2 rounded" />
+          <input type="number" name="port" placeholder="Port" value={formData.port} onChange={handleChange} className="w-full border p-2 rounded" />
+          <input type="text" name="databaseName" placeholder="Database Name" required value={formData.databaseName} onChange={handleChange} className="w-full border p-2 rounded" />
 
           <div className="flex justify-end space-x-2 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-300 rounded"
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className={`px-4 py-2 text-white rounded ${loading ? "bg-blue-300" : "bg-blue-500"}`}
-              disabled={loading}
-            >
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded" disabled={loading}>Cancel</button>
+            <button type="submit" className={`px-4 py-2 text-white rounded ${loading ? "bg-blue-300" : "bg-blue-500"}`} disabled={loading}>
               {loading ? "Submitting..." : "Submit"}
             </button>
           </div>

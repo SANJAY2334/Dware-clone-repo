@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect } from "react";
+import clientToken from "../../utils/ClientToken";
 
 const AuthContext = createContext();
 

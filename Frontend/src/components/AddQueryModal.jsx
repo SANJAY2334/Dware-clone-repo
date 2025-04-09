@@ -1,171 +1,307 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import QueryEditorModal from "./QueryEditorModal";
+import clientToken from "../../utils/ClientToken";
 
-const AddQueryModal = ({ isOpen, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    sourceType: "",
-    sourceName: "",
-    function: "",
+const AddQueryModal = ({ isOpen, onClose, onSave, roles, editData = null }) => {
+  const initialForm = {
     queryName: "",
+    sourceType: "",
+    function: "",
     query: "",
     createdBy: "",
-  });
-
-  if (!isOpen) return null;
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    updatedBy: "",
+    comment: "",
+    connectionName: "",
+    connectionDtlId: "",
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const [form, setForm] = useState(initialForm);
+  const [showQueryEditor, setShowQueryEditor] = useState(false);
+  const [connectionNames, setConnectionNames] = useState([]);
 
-    // Validation
-    if (!formData.sourceType || !formData.sourceName || !formData.queryName || !formData.query || !formData.createdBy) {
-      alert("Please fill in all required fields.");
+  const sourceTypeToMstId = {
+    SQL: 1,
+    Snowflake: 3,
+    SalesForce: 4,
+  };
+
+  const sourceTypeToSourceId = {
+    SQL: "1",
+    Snowflake: "3",
+    SalesForce: "4",
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "sourceType") {
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+        connectionName: "",
+        connectionDtlId: "",
+      }));
+    } else if (name === "connectionName") {
+      const selected = connectionNames.find((conn) => conn.name === value);
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+        connectionDtlId: selected?.dtl_ID || "",
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  const fetchConnections = async (selectedType) => {
+    const mstId = sourceTypeToMstId[selectedType];
+    if (!mstId) return;
+
+    try {
+      const formData = new FormData();
+      formData.append("Mst_ID", mstId);
+
+      const response = await fetch(
+        "https://dwareautomator.mresult.com/api/DataSource/GetConnection",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${clientToken}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch connections");
+
+      const data = await response.json();
+      const filtered = data.filter((conn) => conn.dataSourceType === selectedType);
+      setConnectionNames(filtered);
+    } catch (error) {
+      console.error("❌ Error fetching connections:", error);
+      setConnectionNames([]);
+    }
+  };
+
+  const saveTestCase = async (form) => {
+    try {
+      const payload = {
+        testCase_ID: editData?.testCase_ID || "TC00",
+        testCaseName: form.queryName,
+        Dtl_ID: form.connectionDtlId || "25",
+        query: form.query,
+        functionType: form.function,
+        sourceID: sourceTypeToSourceId[form.sourceType] || "1",
+        comments: form.comment || null,
+        lastModified: null,
+      };
+
+      const response = await fetch(
+        "https://dwareautomator.mresult.com/api/testCase/save",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${clientToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) throw new Error("❌ Test case save failed");
+
+      const result = await response.json();
+      console.log("✅ Test case saved:", result);
+      return result;
+    } catch (error) {
+      console.error("❌ Error saving test case:", error);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!form.queryName || !form.sourceType || !form.query) {
+      alert("Please fill all required fields.");
       return;
     }
 
-    onSave(formData);
-    setFormData({
-      sourceType: "",
-      sourceName: "",
-      function: "",
-      queryName: "",
-      query: "",
-      createdBy: "",
-    });
-
+    await saveTestCase(form);
+    onSave(form, !!editData);
+    resetForm();
     onClose();
   };
 
-  
+  const resetForm = () => {
+    setForm(initialForm);
+    setConnectionNames([]);
+  };
+
+  useEffect(() => {
+    if (form.sourceType) {
+      fetchConnections(form.sourceType);
+    }
+  }, [form.sourceType]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editData) {
+        setForm({
+          queryName: editData.queryName || "",
+          sourceType: editData.sourceType || "",
+          function: editData.function || "",
+          query: editData.query || "",
+          createdBy: editData.createdBy || "",
+          updatedBy: editData.updatedBy || "",
+          comment: editData.comment || "",
+          connectionName: editData.connectionName || "",
+          connectionDtlId: editData.connectionDtlId || "",
+        });
+        if (editData.sourceType) {
+          fetchConnections(editData.sourceType);
+        }
+      } else {
+        resetForm();
+      }
+    }
+  }, [editData, isOpen]);
+
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 transition-opacity">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 transition-transform transform scale-100">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Add Query</h2>
-          <button className="text-gray-600 hover:text-gray-900" onClick={onClose}>
-            ✖
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-y-auto">
+      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-2xl relative">
+        <h3 className="text-xl font-bold mb-4">
+          {editData ? "Edit Query" : "Add New Query"}
+        </h3>
+
+        <div className="grid grid-cols-2 gap-4">
+          <input
+            type="text"
+            name="queryName"
+            placeholder="Query Name"
+            value={form.queryName}
+            onChange={handleChange}
+            className="border p-2 rounded"
+          />
+
+          <select
+            name="sourceType"
+            value={form.sourceType}
+            onChange={handleChange}
+            className="border p-2 rounded"
+          >
+            <option value="">Select Source Type</option>
+            <option value="SQL">SQL</option>
+            <option value="Snowflake">Snowflake</option>
+            <option value="SalesForce">SalesForce</option>
+          </select>
+
+          <select
+            name="connectionName"
+            value={form.connectionName}
+            onChange={handleChange}
+            className="border p-2 rounded"
+            disabled={!connectionNames.length}
+          >
+            <option value="">Select Connection</option>
+            {connectionNames.map((conn) => (
+              <option key={conn.dtl_ID} value={conn.name}>
+                {conn.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            name="function"
+            value={form.function}
+            onChange={handleChange}
+            className="border p-2 rounded"
+          >
+            <option value="">Select Function</option>
+            <option value="Count">Count</option>
+            <option value="Duplicate">Duplicate</option>
+            <option value="Data Validation">Data Validation</option>
+            <option value="Others">Others</option>
+          </select>
+
+          <input
+            type="text"
+            name="createdBy"
+            placeholder="Created By"
+            value={form.createdBy}
+            onChange={handleChange}
+            className="border p-2 rounded"
+          />
+
+          <input
+            type="text"
+            name="updatedBy"
+            placeholder="Updated By"
+            value={form.updatedBy}
+            onChange={handleChange}
+            className="border p-2 rounded"
+          />
         </div>
 
-        <form onSubmit={handleSubmit}>
-          {/* Source Type */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium">
-              Source Type <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="sourceType"
-              value={formData.sourceType}
-              className="w-full p-2 border rounded"
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              <option value="SQL">SQL</option>
-              <option value="Postgre SQL">Postgre SQL</option>
-              <option value="MySQL">MySQL</option>
-              <option value="Oracle">Oracle</option>
-              <option value="SnowFlake">SnowFlake</option>
-            </select>
-          </div>
-
-          {/* Source Name */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium">
-              Source Name <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="sourceName"
-              value={formData.sourceName}
-              className="w-full p-2 border rounded"
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              <option value="SQL_Data_string">SQL_Data_string</option>
-              <option value="Postgre_SQL_Data_str">Postgre_SQL_Data_str</option>
-              <option value="MySQL_Data_string">MySQL_Data_string</option>
-              <option value="Oracle_Data_string">Oracle_Data_string</option>
-              <option value="SnowFlake_Data_string">SnowFlake_Data_string</option>
-            </select>
-          </div>
-
-          {/* Query Name */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium">
-              Query Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="queryName"
-              value={formData.queryName}
-              className="w-full p-2 border rounded"
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          {/* Function */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium">
-              Function <span className="text-red-500">*</span>
-            </label>
-            <select
-              name="function"
-              value={formData.function}
-              className="w-full p-2 border rounded"
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select</option>
-              <option value="count">Count</option>
-              <option value="Duplicate">Duplicate</option>
-              <option value="Data Validation">Data Validation</option>
-              <option value="Others">Others</option>
-            </select>
-          </div>
-
-          {/* Created By */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium">
-              Created By <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="createdBy"
-              value={formData.createdBy}
-              className="w-full p-2 border rounded"
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          {/* Query */}
-          <div className="mb-4">
-            <label className="block text-gray-700 font-medium">
-              Query <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              name="query"
-              value={formData.query}
-              className="w-full h-40 p-2 border rounded"
-              onChange={handleChange}
-              required
-            ></textarea>
-          </div>
-
-          {/* Save Button */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+        <div className="mt-4">
+          <label className="text-sm font-semibold mb-1 block">Query</label>
+          <div
+            className="border p-2 rounded bg-gray-50 cursor-pointer"
+            onClick={() => setShowQueryEditor(true)}
           >
-            Save
+            {form.query ? (
+              <pre className="whitespace-pre-wrap text-sm text-gray-800">
+                {form.query}
+              </pre>
+            ) : (
+              <span className="text-gray-500">Click to add query</span>
+            )}
+          </div>
+        </div>
+
+        <textarea
+          name="comment"
+          placeholder="Comment"
+          value={form.comment}
+          onChange={handleChange}
+          className="w-full border p-2 rounded mt-2"
+        />
+
+        <div className="flex justify-end space-x-4 mt-4">
+          <button
+            onClick={() => {
+              onClose();
+              resetForm();
+            }}
+            className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+          >
+            Cancel
           </button>
-        </form>
+          <button
+            onClick={handleSubmit}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            {editData ? "Update" : "Save"}
+          </button>
+        </div>
       </div>
+
+      <QueryEditorModal
+        isOpen={showQueryEditor}
+        onClose={() => setShowQueryEditor(false)}
+        editData={form.query}
+        attributes={[
+          "SELECT", "FROM", "WHERE", "AND", "OR", "NOT",
+          "ORDER BY", "GROUP BY", "HAVING", "JOIN",
+          "INNER JOIN", "LEFT JOIN", "RIGHT JOIN", "ON", "LIMIT"
+        ]}
+        initialQuery={form.query}
+        onSave={(newQuery) =>
+          setForm((prev) => ({ ...prev, query: newQuery }))
+        }
+      />
     </div>
   );
 };

@@ -1,58 +1,87 @@
 import { useState, useEffect } from "react";
 import { FaFileAlt, FaTrash, FaFileExcel, FaEye } from "react-icons/fa";
-import * as XLSX from "xlsx"; // Fix XLSX import
+import * as XLSX from "xlsx";
 
 const DBRuns = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRows, setSelectedRows] = useState([]); // For selected rows
+  const [selectedRows, setSelectedRows] = useState([]);
+
+  // Manually enter your client token here
+  const clientToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgiLCJFbWFpbCI6InJhZ3NhbmpheTdAb3V0bG9vay5jb20iLCJuYmYiOjE3NDQyMDEyNzksImV4cCI6MTc0NDIwNDg3OSwiaWF0IjoxNzQ0MjAxMjc5LCJpc3MiOiJodHRwczovL2R3YXJlYXV0b21hdG9yLm1yZXN1bHQuY29tOjQyMDAifQ.Y3G1knZv6MzZfcKkgNpo0N_0WK6WPhUSckY3JjL8IIQ";  // Replace with your actual token
+
+  const fetchRunsData = async () => {
+    setLoading(true);
+
+    // Ensure the token is not empty
+    if (!clientToken) {
+      console.error("❌ No token found. Please log in.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("https://dwareautomator.mresult.com/api/RunHistory/GetData", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json, text/plain, */*",
+          Authorization: `Bearer ${clientToken}`,  // Use the manually entered token here
+        },
+        body: JSON.stringify({
+          Category: "DBComparecase",
+          Timezone: "all",
+          StartDate: "undefined",
+          EndDate: "",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const text = await response.text();
+      if (!text) {
+        throw new Error("Empty response body");
+      }
+
+      const result = JSON.parse(text);
+      console.log("📦 API Raw Result:", result);
+
+      if (Array.isArray(result)) {
+        const formatted = result.map((item) => ({
+          _id: item._id || item.Id || "N/A",
+          name: item.Name || item.name || "N/A",
+          dateTime: item.CreatedDate || item.createdAt || "N/A",
+          status: item.Status || "Success",
+          runType: item.Type || "Manual",
+        }));
+
+        setData(formatted);
+      } else {
+        console.error("Unexpected API response format:", result);
+        setData([]);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching DB Run History:", error);
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("http://localhost:5000/api/comparisons/type/db");
-        if (!response.ok) throw new Error("Failed to fetch data");
-  
-        const result = await response.json();
-        console.log("Fetched Data:", result); // ✅ Debug API Response
-  
-        if (Array.isArray(result)) {
-          const formattedData = result.map((item) => ({
-            _id: item._id,
-            name: item.results?.[0]?.name || "N/A", // ✅ Get name from results array
-            dateTime: item.createdAt ? new Date(item.createdAt).toLocaleString() : "N/A", // ✅ Format dateTime
-            status: item.status || "Success",
-            runType: item.type || "Manual",
-          }));
-  
-          setData(formattedData);
-          console.log("Formatted Data:", formattedData); // ✅ Debug Processed Data
-        } else {
-          console.error("Unexpected API response format:", result);
-          setData([]);
-        }
-      } catch (error) {
-        console.error("Error fetching DB comparison runs:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    fetchData();
+    fetchRunsData();
   }, []);
-  
 
-  // ✅ Handle row selection
   const toggleRowSelection = (id) => {
     setSelectedRows((prev) =>
       prev.includes(id) ? prev.filter((rowId) => rowId !== id) : [...prev, id]
     );
   };
 
-  // ✅ Handle delete functionality
   const handleDelete = async () => {
     if (selectedRows.length === 0) return;
-
     const confirmDelete = window.confirm("Are you sure you want to delete the selected items?");
     if (!confirmDelete) return;
 
@@ -60,22 +89,18 @@ const DBRuns = () => {
       for (const id of selectedRows) {
         await fetch(`http://localhost:5000/api/comparisons/${id}`, { method: "DELETE" });
       }
-
       setData((prevData) => prevData.filter((row) => !selectedRows.includes(row._id)));
-      setSelectedRows([]); // Clear selection
+      setSelectedRows([]);
     } catch (error) {
       console.error("Error deleting DB comparison runs:", error);
     }
   };
 
-  // ✅ Handle Export to XLS
   const handleExportToXLS = () => {
     if (data.length === 0) return;
-
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "DB Runs");
-
     XLSX.writeFile(workbook, "DB_Runs.xlsx");
   };
 
@@ -112,7 +137,7 @@ const DBRuns = () => {
       </div>
 
       {/* Table */}
-      <div className="mt-6  bg-white shadow-lg rounded-lg overflow-hidden">
+      <div className="mt-6 bg-white shadow-lg rounded-lg overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-200 text-gray-700">
             <tr>
@@ -126,7 +151,6 @@ const DBRuns = () => {
               <th className="p-3 text-left">Name</th>
               <th className="p-3 text-left">Status</th>
               <th className="p-3 text-left">Date and Time</th>
-              
               <th className="p-3 text-left">Run Type</th>
               <th className="p-3 text-center">View Report</th>
             </tr>
@@ -147,8 +171,7 @@ const DBRuns = () => {
             ) : (
               data.map((row) => {
                 const dateObj = row.dateTime ? new Date(row.dateTime) : null;
-                const formattedDate = dateObj ? dateObj.toLocaleDateString() : "N/A";
-                const formattedTime = dateObj ? dateObj.toLocaleTimeString() : "N/A";
+                const formattedDateTime = dateObj ? dateObj.toLocaleString() : "N/A";
 
                 return (
                   <tr key={row._id} className="border-t hover:bg-gray-100 transition">
@@ -161,12 +184,11 @@ const DBRuns = () => {
                     </td>
                     <td className="p-3">{row.name}</td>
                     <td className="p-3">{row.status}</td>
-                    <td className="p-3">{row.dateTime}</td>
-                    
-                    <td className="p-3">Manual</td>
+                    <td className="p-3">{formattedDateTime}</td>
+                    <td className="p-3">{row.runType}</td>
                     <td className="p-3 text-center">
                       <button className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600">
-                        <FaEye /> 
+                        <FaEye />
                       </button>
                     </td>
                   </tr>

@@ -3,9 +3,11 @@ import DataSourceCard from "../components/DataSourceCard";
 import DataSource from "../components/DataSource";
 import ProjectList from "../components/projectList";
 import AddNewConnection from "../components/AddNewConnection";
+import clientToken from "../../utils/ClientToken";
+
 
 const DataSources = () => {
-  const [userDetails, setUserDetails] = useState(null);
+  const [UserDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedDataSource, setSelectedDataSource] = useState("");
@@ -51,16 +53,42 @@ const DataSources = () => {
       setLoading(false);
     }
   };
+  const fetchRoles = async () => {
+    try {
+      const response = await fetch(
+        "https://dwareautomator.mresult.com/api/Admin/GetRoles?ProjectID=0",
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization:
+              `Bearer ${clientToken}`,
+          }
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to fetch roles");
+      const data = await response.json();
+      console.log("✅ Roles fetched:", data);
+      setRoles(data);
+    } catch (err) {
+      console.error("❌ Error fetching roles:", err.message);
+    }
+  };
 
   // ✅ Fetch data when component mounts
   useEffect(() => {
     fetchUserDetails();
+    fetchRoles();
   }, []);
+
+  
 
   // ✅ Handle Database Click
   const handleDatabaseClick = (dbName) => {
     setSelectedDataSource(dbName); // Set selected database
-    setShowModal(true); // Show modal
+    setShowModal(true);
+     // Show modal
   };
 
   return (
@@ -93,11 +121,11 @@ const DataSources = () => {
             </div>
 
             {/* ✅ Additional Components */}
-            <div className="mt-6">
+            <div className="mt-6 hidden">
               <DataSource />
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 hidden">
               <ProjectList />
             </div>
           </div>

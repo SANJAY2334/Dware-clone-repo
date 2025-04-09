@@ -1,18 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 
 const Scheduler = () => {
-  const [events, setEvents] = useState([
-    { id: "1", title: "Team Meeting", start: "2025-03-22T10:00:00", end: "2025-03-22T11:00:00" },
-    { id: "2", title: "Project Deadline", start: "2025-03-25", allDay: true },
-  ]);
+  const [events, setEvents] = useState([]);
   const [newEvent, setNewEvent] = useState({ title: "", date: "" });
-  const [editingEvent, setEditingEvent] = useState(null); // Stores the event being edited
+  const [editingEvent, setEditingEvent] = useState(null);
 
-  // Handle adding a new event
+  
+  // Fetch events from API
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch("https://dwareautomator.mresult.com/api/schedular/GetSchedular", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgiLCJFbWFpbCI6InJhZ3NhbmpheTdAb3V0bG9vay5jb20iLCJuYmYiOjE3NDQxMDIyOTgsImV4cCI6MTc0NDEwNTg5OCwiaWF0IjoxNzQ0MTAyMjk4LCJpc3MiOiJodHRwczovL2R3YXJlYXV0b21hdG9yLm1yZXN1bHQuY29tOjQyMDAifQ.Rpm7FJB1EelOf3JaAtUhxa8j7o6xdH1v4RmBxdVhSIQ",
+          },
+        });
+        const result = await res.json();
+        if (Array.isArray(result)) {
+          const mappedEvents = result.map((item, index) => ({
+            id: String(index + 1),
+            title: item.name || `Event ${index + 1}`,
+            start: item.date || item.startDate || new Date().toISOString(), // Adjust based on actual response structure
+            allDay: true,
+          }));
+          setEvents(mappedEvents);
+        } else {
+          console.error("Unexpected response format:", result);
+        }
+      } catch (err) {
+        console.error("Error fetching events:", err);
+      }
+    };
+
+    const fetchJobSummary = async () => {
+      try {
+        const response = await fetch("https://dwareautomator.mresult.com/api/schedular/GetJobSummary?category=all", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization:"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgiLCJFbWFpbCI6InJhZ3NhbmpheTdAb3V0bG9vay5jb20iLCJuYmYiOjE3NDQxMDIyOTgsImV4cCI6MTc0NDEwNTg5OCwiaWF0IjoxNzQ0MTAyMjk4LCJpc3MiOiJodHRwczovL2R3YXJlYXV0b21hdG9yLm1yZXN1bHQuY29tOjQyMDAifQ.Rpm7FJB1EelOf3JaAtUhxa8j7o6xdH1v4RmBxdVhSIQ" ,
+          },
+        });
+    
+        const data = await response.json();
+        console.log("Job Summary:", data);
+      } catch (error) {
+        console.error("Error fetching job summary:", error);
+      }
+    };
+
+    fetchEvents();
+    fetchJobSummary();
+  }, []);
+
   const handleAddEvent = (e) => {
     e.preventDefault();
     if (!newEvent.title || !newEvent.date) return alert("Please fill in all fields");
@@ -20,19 +66,16 @@ const Scheduler = () => {
     setNewEvent({ title: "", date: "" });
   };
 
-  // Handle event click (edit mode)
   const handleEventClick = ({ event }) => {
     setEditingEvent({ id: event.id, title: event.title, start: event.startStr });
   };
 
-  // Handle event update
   const handleEditEvent = (e) => {
     e.preventDefault();
     setEvents(events.map(evt => (evt.id === editingEvent.id ? { ...editingEvent } : evt)));
     setEditingEvent(null);
   };
 
-  // Handle event deletion
   const handleDeleteEvent = () => {
     if (window.confirm(`Delete event: ${editingEvent.title}?`)) {
       setEvents(events.filter(evt => evt.id !== editingEvent.id));
@@ -44,7 +87,6 @@ const Scheduler = () => {
     <div className="p-6 bg-gray-100 min-h-screen">
       <h2 className="text-2xl font-bold mb-4 text-blue-700">📅 Scheduler</h2>
 
-      {/* Add New Task Form */}
       <div className="bg-white shadow-md rounded-lg p-4 mb-4">
         <h3 className="text-lg font-semibold mb-3">Add New Task</h3>
         <form onSubmit={handleAddEvent} className="grid grid-cols-3 gap-3">
@@ -67,7 +109,6 @@ const Scheduler = () => {
         </form>
       </div>
 
-      {/* Edit Event Form (if an event is being edited) */}
       {editingEvent && (
         <div className="bg-white shadow-md rounded-lg p-4 mb-4">
           <h3 className="text-lg font-semibold mb-3">Edit Task</h3>
@@ -95,7 +136,6 @@ const Scheduler = () => {
         </div>
       )}
 
-      {/* FullCalendar Scheduler */}
       <div className="bg-white shadow-lg rounded-lg p-4">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -103,7 +143,7 @@ const Scheduler = () => {
           editable={true}
           selectable={true}
           events={events}
-          eventClick={handleEventClick} // Enables editing
+          eventClick={handleEventClick}
           height="75vh"
         />
       </div>

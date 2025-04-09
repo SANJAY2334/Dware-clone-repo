@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import clientToken from "../../utils/ClientToken";
 
 const DataSource = () => {
   const [dataSources, setDataSources] = useState([]);
@@ -11,7 +12,7 @@ const DataSource = () => {
         if (!token) throw new Error("Unauthorized. Please log in.");
 
         const response = await fetch("https://dwareautomator.mresult.com/api/dataSource/getDS", {
-          headers: { Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgiLCJFbWFpbCI6InJhZ3NhbmpheTdAb3V0bG9vay5jb20iLCJuYmYiOjE3NDM3NTkwNTAsImV4cCI6MTc0Mzc2MjY1MCwiaWF0IjoxNzQzNzU5MDUwLCJpc3MiOiJodHRwczovL2R3YXJlYXV0b21hdG9yLm1yZXN1bHQuY29tOjQyMDAifQ.mrWQUci24HgmnIVhAde9YPT9nFPixMEuVNHRiLBbrhI" },
+          headers: { Authorization: `Bearer ${clientToken}` },
         });
 
         if (!response.ok) {
