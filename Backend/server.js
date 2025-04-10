@@ -85,6 +85,15 @@ app.get("/api/dashboard", authenticateToken, (req, res) => {
     dataComparisonByType: { "Exact Match": 70, "Partial Match": 50, "No Match": 20 },
   });
 });
+app.get("/api/client-dashboard", authenticateToken, (req, res) => {
+  res.json({
+    queryRequests: 120,
+    dataComparisons: 85,
+    scheduledTasks: 40,
+    queryRequestsBySources: { API: 42, Database: 55, Files: 30, Other: 15 },
+    dataComparisonByType: { "Exact Match": 70, "Partial Match": 50, "No Match": 20 },
+  });
+});
 
 // ✅ API Routes
 app.use("/api/auth", authRoutes);

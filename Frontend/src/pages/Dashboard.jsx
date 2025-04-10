@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import SummaryCard from "../components/SummaryCard";
 import QueryRequestsChart from "../components/QueryRequestsChart";
 import DataComparisonChart from "../components/DataComparisonChart";
-import ProjectList from "../components/projectList"; // 🔥 Import ProjectList
-
+import ProjectList from "../components/projectList";
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
@@ -11,13 +10,26 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  let token = localStorage.getItem("token") || localStorage.getItem("clientToken");
+token = token ? token.trim() : null;
+
+if (!token) {
+  throw new Error("No token found. Please log in.");
+}
+
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("clientToken") || localStorage.getItem("token");
         if (!token) throw new Error("No token found. Please log in.");
 
-        const response = await fetch("http://localhost:5000/api/getUserDetails", {
+        const isClient = localStorage.getItem("clientToken") !== null;
+        const endpoint = isClient
+          ? "https://dwareautomator.mresult.com/api/users/GetUserDetail"
+          : "http://localhost:5000/api/getUserDetails";
+
+        const response = await fetch(endpoint, {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -30,12 +42,15 @@ const Dashboard = () => {
         }
 
         const data = await response.json();
-        console.log("User Data:", data); // 🔥 Debugging
+        console.log("User Details:", data);
+
+        const user = data.user || data; // server response may vary
 
         setUserDetails({
-          firstName: data.name?.split(" ")[0] || "User",
-          lastName: data.name?.split(" ")[1] || "",
-          email: data.email || "",
+          firstName: user.firstName || user.name?.split(" ")[0] || "User",
+          lastName: user.lastName || user.name?.split(" ")[1] || "",
+          email: user.emailID || user.email || "",
+          role: user.roleDisplayName || "User",
         });
       } catch (err) {
         console.error("Error fetching user details:", err);
@@ -45,10 +60,11 @@ const Dashboard = () => {
 
     const fetchDashboardData = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token") || localStorage.getItem("clientToken");
         if (!token) throw new Error("Unauthorized access. Please log in.");
 
         const response = await fetch("http://localhost:5000/api/dashboard", {
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -61,6 +77,7 @@ const Dashboard = () => {
         }
 
         const data = await response.json();
+        console.log("Dashboard Data:", data);
         setDashboardData(data);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
@@ -77,18 +94,14 @@ const Dashboard = () => {
     fetchData();
   }, []);
 
-  if (loading) {
-    return <div className="text-center text-gray-600 mt-10">Loading...</div>;
-  }
-
-  if (error) {
-    return <div className="text-center text-red-500 mt-10">{error}</div>;
-  }
+  if (loading) return <div className="text-center text-gray-600 mt-10">Loading...</div>;
+  if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-gray-700">Dashboard</h1>
-      
+      <h1 className="text-3xl font-bold text-gray-700">
+        Welcome, {userDetails?.firstName} 👋
+      </h1>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
@@ -109,7 +122,7 @@ const Dashboard = () => {
         />
       </div>
 
-      {/* 🔥 Show Project List */}
+      {/* 🔥 Optional Project List */}
       <div className="mt-6 hidden">
         <ProjectList />
       </div>

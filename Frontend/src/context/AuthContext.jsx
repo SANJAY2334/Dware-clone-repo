@@ -1,5 +1,4 @@
 import { createContext, useState, useEffect } from "react";
-import clientToken from "../../utils/ClientToken";
 
 const AuthContext = createContext();
 
@@ -7,24 +6,34 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Load user from local storage on app start
+  // ✅ Load user from localStorage on mount
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
+    const devToken = localStorage.getItem("token");
+    const devUser = localStorage.getItem("user");
 
-    if (token && storedUser) {
+    const clientToken = localStorage.getItem("clientToken");
+    const clientUser = localStorage.getItem("clientUser");
+
+    if (devToken && devUser) {
       try {
-        setUser(JSON.parse(storedUser)); // ✅ Only parse if valid
-      } catch (error) {
-        console.error("❌ Error parsing user data:", error.message);
-        localStorage.removeItem("user"); // ✅ Remove invalid data
+        setUser(JSON.parse(devUser));
+      } catch (err) {
+        console.error("❌ Dev user parse error");
+        localStorage.removeItem("user");
+      }
+    } else if (clientToken && clientUser) {
+      try {
+        setUser(JSON.parse(clientUser));
+      } catch (err) {
+        console.error("❌ Client user parse error");
+        localStorage.removeItem("clientUser");
       }
     }
 
     setLoading(false);
   }, []);
 
-  // ✅ Fetch User Details Function
+  // ✅ Fetch Developer User Details
   const fetchUserDetails = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -34,25 +43,22 @@ export const AuthProvider = ({ children }) => {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token} `,
+          Authorization: `Bearer ${token}`,
         },
       });
 
-      if (!res.ok) throw new Error("Failed to fetch user details");
-
       const data = await res.json();
-      if (!data || !data.user) throw new Error("Invalid user data received");
+      if (!data || !data.user) throw new Error("Invalid user data");
 
       setUser(data.user);
       localStorage.setItem("user", JSON.stringify(data.user));
-      console.log("✅ Fetched User Details:", data.user);
     } catch (error) {
-      console.error("❌ Error fetching user details:", error.message);
+      console.error("❌ Fetch user error:", error.message);
       logout();
     }
   };
 
-  // ✅ Login Function
+  // ✅ Developer Login
   const login = async (email, password, navigate) => {
     try {
       const res = await fetch("http://localhost:5000/api/auth/login", {
@@ -72,20 +78,54 @@ export const AuthProvider = ({ children }) => {
       await fetchUserDetails();
     } catch (error) {
       alert(error.message);
-      console.error("❌ Login Error:", error.message);
     }
   };
 
-  // ✅ Logout Function
+  // ✅ Client Login
+  const clientLogin = async (email, password, navigate) => {
+    try {
+      const res = await fetch(
+        "https://dwareautomator.mresult.com/api/users/authenticateUser",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ EmailID: email, Password: password }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok || !data.token) throw new Error("Client login failed");
+
+      localStorage.setItem("clientToken", data.token);
+      localStorage.setItem("clientUser", JSON.stringify(data.user[0]));
+      setUser(data.user[0]);
+      navigate("/dashboard");
+    } catch (error) {
+      alert("Client Login Failed: " + error.message);
+    }
+  };
+
+  // ✅ Logout for both
   const logout = (navigate) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("clientToken");
+    localStorage.removeItem("clientUser");
     setUser(null);
     if (navigate) navigate("/login");
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, fetchUserDetails }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,         // Developer login
+        clientLogin,   // Client login
+        logout,
+        loading,
+        fetchUserDetails,
+      }}
+    >
       {!loading && children}
     </AuthContext.Provider>
   );
