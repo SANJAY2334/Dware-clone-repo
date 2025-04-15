@@ -70,6 +70,7 @@ const Login = () => {
           </div>
 
           <div className="relative mb-4">
+            <label>Email</label>
             <input
               type="email"
               placeholder="Email"
@@ -84,6 +85,7 @@ const Login = () => {
           </div>
 
           <div className="relative mb-4">
+            <label>Password</label>
             <input
               type="password"
               placeholder="Password"

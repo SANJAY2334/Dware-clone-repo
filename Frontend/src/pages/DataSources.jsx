@@ -5,12 +5,14 @@ import ProjectList from "../components/projectList";
 import AddNewConnection from "../components/AddNewConnection";
 import clientToken from "../../utils/ClientToken";
 
-
 const DataSources = () => {
-  const [UserDetails, setUserDetails] = useState(null);
+  const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedDataSource, setSelectedDataSource] = useState("");
+  const [roles, setRoles] = useState([]);
+
+  const token = clientToken; // ⬅️ Use consistent token value
 
   const databases = [
     { name: "SQL", icon: "/icons/sql.png", isEditable: true },
@@ -33,26 +35,31 @@ const DataSources = () => {
   // ✅ Fetch User Details
   const fetchUserDetails = async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token found");
-
-      const response = await fetch("http://localhost:5000/api/getUserDetails", {
+      const res = await fetch("https://dwareautomator.mresult.com/api/users/GetUserDetail", {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${clientToken}`,
         },
       });
 
-      if (!response.ok) throw new Error("Failed to fetch user details");
+      const data = await res.json();
+      const user = Array.isArray(data) ? data[0] : data;
 
-      const userData = await response.json();
-      setUserDetails(userData.user);
+      setUserDetails({
+        firstName: user.firstName || "Client",
+        lastName: user.lastName || "",
+        email: user.emailID || "",
+        role: user.roleDisplayName || "Client",
+      });
     } catch (err) {
-      console.error("❌ Error fetching user details:", err);
+      console.error("❌ Error fetching user details:", err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  // ✅ Fetch Roles
   const fetchRoles = async () => {
     try {
       const response = await fetch(
@@ -61,13 +68,13 @@ const DataSources = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization:
-              `Bearer ${clientToken}`,
-          }
+            Authorization: `Bearer ${clientToken}`,
+          },
         }
       );
 
       if (!response.ok) throw new Error("Failed to fetch roles");
+
       const data = await response.json();
       console.log("✅ Roles fetched:", data);
       setRoles(data);
@@ -76,19 +83,16 @@ const DataSources = () => {
     }
   };
 
-  // ✅ Fetch data when component mounts
+  // ✅ useEffect to fetch everything on mount
   useEffect(() => {
     fetchUserDetails();
     fetchRoles();
   }, []);
 
-  
-
   // ✅ Handle Database Click
   const handleDatabaseClick = (dbName) => {
-    setSelectedDataSource(dbName); // Set selected database
+    setSelectedDataSource(dbName);
     setShowModal(true);
-     // Show modal
   };
 
   return (
@@ -120,11 +124,10 @@ const DataSources = () => {
               ))}
             </div>
 
-            {/* ✅ Additional Components */}
+            {/* ✅ Hidden Extra Components */}
             <div className="mt-6 hidden">
               <DataSource />
             </div>
-
             <div className="mt-6 hidden">
               <ProjectList />
             </div>
@@ -132,7 +135,7 @@ const DataSources = () => {
         </>
       )}
 
-      {/* ✅ Show AddNewConnection Modal when triggered */}
+      {/* ✅ Modal for Adding New Connection */}
       {showModal && (
         <AddNewConnection
           onClose={() => setShowModal(false)}

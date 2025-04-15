@@ -2,17 +2,28 @@ import React, { useEffect, useState } from "react";
 import SummaryCard from "../components/SummaryCard";
 import DropdownButton from "../components/DropdownButton";
 import BarChartComponent from "../components/BarChartComponent";
+import GraphConfigModal from "../components/GraphConfigModal";
+import clientToken from "../../utils/ClientToken";
 
 const ClientDashboard = () => {
   const [userDetails, setUserDetails] = useState(null);
   const [error, setError] = useState(null);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [currentGraphType, setCurrentGraphType] = useState(null);
+
   const [graphData, setGraphData] = useState({
-    queryRequests: null,
+    queryRequests:null,
     dataComparisons: null,
     scheduledTasks: null,
   });
 
   const token = localStorage.getItem("clientToken");
+
+  const handleGenerate = (data) => {
+    console.log("Generated graph config:", data);
+    setIsModalOpen(false);
+  };
 
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -20,7 +31,7 @@ const ClientDashboard = () => {
         const res = await fetch("https://dwareautomator.mresult.com/api/users/GetUserDetail", {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${clientToken}`,
           },
         });
         const data = await res.json();
@@ -44,7 +55,7 @@ const ClientDashboard = () => {
       try {
         const headers = {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${clientToken}`,
         };
 
         const fetchGraph = (number) =>
@@ -72,8 +83,15 @@ const ClientDashboard = () => {
     fetchGraphData();
   }, [token]);
 
-  const handleAdd = (label) => alert(`Add clicked on ${label}`);
-  const handleEdit = (label) => alert(`Edit clicked on ${label}`);
+  const handleAdd = (label) => {
+    setCurrentGraphType(label);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (label) => {
+    setCurrentGraphType(label);
+    setIsModalOpen(true);
+  };
 
   if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
 
@@ -88,6 +106,7 @@ const ClientDashboard = () => {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+        
         <SummaryCard title="Query Requests" count={graphData.queryRequests?.count || 0} color="bg-blue-500 hover:bg-blue-700 duration-200" />
         <SummaryCard title="Data Comparisons" count={graphData.dataComparisons?.count || 0} color="bg-green-500 hover:bg-green-700 duration-200" />
         <SummaryCard title="Scheduled Tasks" count={graphData.scheduledTasks?.count || 0} color="bg-purple-500 hover:bg-purple-700 duration-200" />
@@ -111,6 +130,13 @@ const ClientDashboard = () => {
           </div>
         ))}
       </div>
+
+      <GraphConfigModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onGenerate={handleGenerate}
+        graphType={currentGraphType}
+      />
     </div>
   );
 };

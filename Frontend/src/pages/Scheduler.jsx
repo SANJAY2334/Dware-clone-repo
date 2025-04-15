@@ -3,11 +3,14 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import clientToken from "../../utils/ClientToken";
+import ScheduledTasksModal from "../components/ScheduledTasksModal";
 
 const Scheduler = () => {
   const [events, setEvents] = useState([]);
   const [newEvent, setNewEvent] = useState({ title: "", date: "" });
   const [editingEvent, setEditingEvent] = useState(null);
+  const [showMonitor, setShowMonitor] = useState(false);
 
   
   // Fetch events from API
@@ -18,7 +21,7 @@ const Scheduler = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgiLCJFbWFpbCI6InJhZ3NhbmpheTdAb3V0bG9vay5jb20iLCJuYmYiOjE3NDQxMDIyOTgsImV4cCI6MTc0NDEwNTg5OCwiaWF0IjoxNzQ0MTAyMjk4LCJpc3MiOiJodHRwczovL2R3YXJlYXV0b21hdG9yLm1yZXN1bHQuY29tOjQyMDAifQ.Rpm7FJB1EelOf3JaAtUhxa8j7o6xdH1v4RmBxdVhSIQ",
+            Authorization: `Bearer ${clientToken} `,
           },
         });
         const result = await res.json();
@@ -44,7 +47,7 @@ const Scheduler = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            Authorization:"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgiLCJFbWFpbCI6InJhZ3NhbmpheTdAb3V0bG9vay5jb20iLCJuYmYiOjE3NDQxMDIyOTgsImV4cCI6MTc0NDEwNTg5OCwiaWF0IjoxNzQ0MTAyMjk4LCJpc3MiOiJodHRwczovL2R3YXJlYXV0b21hdG9yLm1yZXN1bHQuY29tOjQyMDAifQ.Rpm7FJB1EelOf3JaAtUhxa8j7o6xdH1v4RmBxdVhSIQ" ,
+            Authorization:`Bearer ${clientToken} ` ,
           },
         });
     
@@ -85,11 +88,11 @@ const Scheduler = () => {
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
-      <h2 className="text-2xl font-bold mb-4 text-blue-700">📅 Scheduler</h2>
+      <h2 className="text-2xl font-bold mb-4">Scheduler</h2>
 
       <div className="bg-white shadow-md rounded-lg p-4 mb-4">
         <h3 className="text-lg font-semibold mb-3">Add New Task</h3>
-        <form onSubmit={handleAddEvent} className="grid grid-cols-3 gap-3">
+        <form onSubmit={handleAddEvent} className="grid grid-cols-4 gap-3">
           <input
             type="text"
             placeholder="Task Title"
@@ -105,6 +108,13 @@ const Scheduler = () => {
             className="p-2 border rounded"
             required
           />
+          <button
+          className="bg-blue-700 text-white px-2 py-2 rounded"
+          onClick={() => setShowMonitor(true)}
+        >
+          View Scheduled Tasks
+        </button>
+          
           <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">Add Task</button>
         </form>
       </div>
@@ -147,6 +157,7 @@ const Scheduler = () => {
           height="75vh"
         />
       </div>
+      <ScheduledTasksModal isOpen={showMonitor} onClose={() => setShowMonitor(false)} />
     </div>
   );
 };

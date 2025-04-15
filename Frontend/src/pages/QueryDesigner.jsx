@@ -56,7 +56,6 @@ const QueryDesigner = () => {
       if (!response.ok) throw new Error("Failed to fetch test cases");
       const data = await response.json();
 
-      // Mapping sourceID to sourceType manually
       const sourceTypeMap = {
         1: "SQL",
         2: "Oracle",
@@ -193,11 +192,15 @@ const QueryDesigner = () => {
     setSelectAll(!selectAll);
     setSelectedRows(!selectAll ? queryResult.map((row) => row.id) : []);
   };
+// check queryResult length
+console.log("Query Result Length:", queryResult.length);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen rounded-2xl">
       <ToastContainer position="top-right" autoClose={3000} />
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">Query Designer</h2>
+      <div className="bg-gray-200 rounded-2xl  mb-4 ">
+      <h2 className="text-2xl bg-gray-200 rounded-xl font-bold p-4 text-gray-900">Query Designer</h2>
+      </div>
 
       {/* Action Buttons */}
       <div className="flex space-x-3 mb-4">
@@ -224,48 +227,53 @@ const QueryDesigner = () => {
         </button>
       </div>
 
-      {/* Query Execution Result */}
-      <div className="bg-white shadow-md rounded-lg p-4">
+      {/* Query Table */}
+      <div className="bg-white shadow-md rounded-lg p-4 overflow-x-auto">
         <h3 className="text-lg font-bold text-gray-700">Query Results</h3>
         {loading ? (
           <p className="text-gray-500 mt-2">Loading queries...</p>
         ) : queryResult.length > 0 ? (
-          <table className="w-full mt-3 border-collapse border border-gray-300">
-            <thead className="bg-gray-200">
+          <table className="mt-4 w-full text-sm text-left border-collapse rounded-lg overflow-hidden">
+            <thead className="bg-gray-200 text-gray-700">
               <tr>
-                <th className="border border-gray-300 p-2">
+                <th className="p-3">
                   <input
                     type="checkbox"
                     checked={selectAll}
                     onChange={toggleSelectAll}
                   />
                 </th>
-                <th className="border border-gray-300 p-2">Name</th>
-                <th className="border border-gray-300 p-2">Source Type</th>
-                <th className="border border-gray-300 p-2">Function</th>
-                <th className="border border-gray-300 p-2">Query</th>
-                <th className="border border-gray-300 p-2">Created By</th>
-                <th className="border border-gray-300 p-2">Updated By</th>
+                <th className="p-3">Name</th>
+                <th className="p-3">Source Type</th>
+                <th className="p-3">Function</th>
+                <th className="p-3">Query</th>
+                <th className="p-3">Created By</th>
+                <th className="p-3">Updated By</th>
               </tr>
             </thead>
             <tbody>
-              {queryResult.map((row) => (
-                <tr key={row.id} className="hover:bg-gray-50 transition">
-                  <td className="border border-gray-300 p-2 text-center">
+              {queryResult.map((row, index) => (
+                <tr
+                  key={row.id}
+                  className={`hover:bg-gray-100 ${
+                    index === queryResult.length - 1 ? "rounded-b-lg" : ""
+                  }`}
+                >
+                  <td className="p-3 text-center">
                     <input
                       type="checkbox"
                       checked={selectedRows.includes(row.id)}
                       onChange={() => toggleRowSelection(row.id)}
                     />
                   </td>
-                  <td className="border border-gray-300 p-2">{row.queryName}</td>
-                  <td className="border border-gray-300 p-2">{row.sourceType}</td>
-                  <td className="border border-gray-300 p-2">{row.function}</td>
-                  <td className="border border-gray-300 p-2 truncate max-w-xs" title={row.query}>
+                  <td className="p-3">{row.queryName}</td>
+                  <td className="p-3">{row.sourceType}</td>
+                  <td className="p-3">{row.function}</td>
+                  <td className="p-3 truncate max-w-xs" title={row.query}>
                     {row.query.length > 50 ? `${row.query.slice(0, 50)}...` : row.query}
                   </td>
-                  <td className="border border-gray-300 p-2">{row.createdBy}</td>
-                  <td className="border border-gray-300 p-2">{row.updatedBy}</td>
+                  <td className="p-3">{row.createdBy}</td>
+                  <td className="p-3">{row.updatedBy}</td>
                 </tr>
               ))}
             </tbody>
@@ -275,14 +283,13 @@ const QueryDesigner = () => {
         )}
       </div>
 
+      {/* Hidden components */}
       <div className="hidden">
         <DataSource roles={roles} />
-      </div>
-
-      <div className="hidden">
         <ProjectList />
       </div>
 
+      {/* Add Query Modal */}
       <AddQueryModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
